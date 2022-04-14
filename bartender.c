@@ -14,6 +14,8 @@
 #include "globals.h"
 #include "bartender.h"
 
+#include <sys/time.h>
+
 /**
  * Code for bartender thread.
  * Do not touch.
@@ -37,6 +39,10 @@ void waitForCustomer()
 {
 	// TODO - synchronize
 	printf("\t\t\t\t\t\t\t\t\t\t\t| Bartender\n");
+	sem_post(barEmpty); //Let customers outside know one person can come in
+
+	sem_wait(custEnter); //Wait for a customer to enter
+	
 }
 
 /**
@@ -46,7 +52,20 @@ void waitForCustomer()
 void makeDrink()
 {
 	// TODO - synchronize
+	sem_wait(drinkOrdered);
+	
+
 	printf("\t\t\t\t\t\t\t\t\t\t\t| \t\tBartender\n");
+
+	sem_post(makingDrink);
+	
+	//Making drink now
+	time_t t;
+	srand((unsigned) time(&t));
+
+	int mixTime = (rand() % 999995) + 5;
+	
+	usleep(mixTime); //make the drink for a random amount of time
 }
 
 /**
@@ -57,7 +76,13 @@ void receivePayment()
 	// TODO - synchronize
 	// at the register waiting for customer to pay
 	printf("\t\t\t\t\t\t\t\t\t\t\t| \t\t\t\tBartender\n");
+	sem_post(drinkReady); //hand the customer their drink
+
+	sem_wait(custPaid); //wait until the customer has paid
 
 	// got paid by the customer!
 	printf("\t\t\t\t\t\t\t\t\t\t\t| \t\t\t\t\t\tBartender\n");
+	sem_post(paymentConfirmed); //let the customer know you got their payment
+	
+	sem_wait(custLeft); //wait until the customer has left to let someone else in
 }
